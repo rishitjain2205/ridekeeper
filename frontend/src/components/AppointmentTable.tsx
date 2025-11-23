@@ -185,7 +185,7 @@ export function AppointmentTable({
                         {apt.patient.housingStatus.toLowerCase().replace("_", " ")}
                       </span>
                       {!apt.patient.phoneNumber && (
-                        <Badge variant="outline\" className="text-xs">
+                        <Badge variant="outline" className="text-xs">
                           No Phone
                         </Badge>
                       )}
