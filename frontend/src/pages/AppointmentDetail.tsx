@@ -84,6 +84,18 @@ export function AppointmentDetail() {
       }
     });
 
+    const unsubRideBooked = socketService.subscribe("RIDE_BOOKED", (data: any) => {
+      if (data.appointmentId === id) {
+        setShowTypingIndicator(false);
+        refetch();
+        addToast({
+          title: "Ride Booked!",
+          description: "Uber ride has been scheduled",
+          type: "success",
+        });
+      }
+    });
+
     const unsubRideOffer = socketService.subscribe("RIDE_OFFER_SENT", (data: any) => {
       if (data.appointmentId === id) {
         setShowTypingIndicator(true);
@@ -105,6 +117,7 @@ export function AppointmentDetail() {
       socketService.leaveAppointment(id);
       unsubSMS();
       unsubRide();
+      unsubRideBooked();
       unsubRideOffer();
       unsubCompleted();
     };
