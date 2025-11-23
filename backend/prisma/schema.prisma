@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Patient {
+  id                 String   @id @default(uuid())
+  firstName          String
+  lastName           String
+  phoneNumber        String?
+  email              String?
+  housingStatus      String   // HOMELESS, UNSTABLY_HOUSED, HOUSED
+  address            String?
+  distanceFromClinic Float?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  appointments Appointment[]
+  caseWorkers  CaseWorker[]  @relation("PatientCaseWorkers")
+
+  @@index([phoneNumber])
+  @@index([housingStatus])
+}
+
+model Clinic {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appointments Appointment[]
+}
+
+model Appointment {
+  id              String   @id @default(uuid())
+  patientId       String
+  clinicId        String
+  appointmentDate DateTime
+  appointmentType String
+  status          String   @default("SCHEDULED") // SCHEDULED, CONFIRMED, COMPLETED, NO_SHOW, CANCELLED
+  riskScore       Int?
+  aiRiskScore     Int?     // AI-enhanced risk score
+  aiConfidence    Int?     // AI confidence level 0-100
+  aiReasoning     String?  // AI explanation
+  aiRecommendations String? // JSON array of recommendations
+  needsRide       Boolean  @default(false)
+  rideOfferSent   Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  clinic      Clinic       @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  ride        Ride?
+  smsMessages SMSMessage[]
+
+  @@index([patientId])
+  @@index([clinicId])
+  @@index([appointmentDate])
+  @@index([status])
+  @@index([riskScore])
+}
+
+model Ride {
+  id              String   @id @default(uuid())
+  appointmentId   String   @unique
+  pickupLocation  String
+  dropoffLocation String
+  pickupTime      DateTime
+  status          String   @default("SCHEDULED") // SCHEDULED, DRIVER_ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED
+  uberRideId      String?
+  estimatedCost   Float?
+  driverName      String?
+  vehicleInfo     String?
+  driverLatitude  Float?
+  driverLongitude Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([pickupTime])
+}
+
+model SMSMessage {
+  id            String   @id @default(uuid())
+  appointmentId String
+  phoneNumber   String
+  message       String
+  direction     String // OUTBOUND, INBOUND
+  status        String // SENT, DELIVERED, FAILED, RECEIVED
+  twilioSid     String?
+  createdAt     DateTime @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
+  @@index([phoneNumber])
+  @@index([createdAt])
+}
+
+model CaseWorker {
+  id           String   @id @default(uuid())
+  name         String
+  phoneNumber  String
+  organization String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  patients Patient[] @relation("PatientCaseWorkers")
+
+  @@index([phoneNumber])
+}
+
+model NoShowHistory {
+  id            String   @id @default(uuid())
+  patientId     String
+  appointmentId String
+  occurredAt    DateTime @default(now())
+
+  @@index([patientId])
+  @@index([occurredAt])
+}
+
+// Cache AI risk assessments
+model AIRiskCache {
+  id            String   @id @default(uuid())
+  appointmentId String   @unique
+  aiScore       Int
+  confidence    Int
+  reasoning     String
+  recommendations String // JSON array
+  riskFactors   String   // JSON array
+  optimalContactTime String?
+  calculatedAt  DateTime @default(now())
+  expiresAt     DateTime
+
+  @@index([appointmentId])
+  @@index([expiresAt])
+}
