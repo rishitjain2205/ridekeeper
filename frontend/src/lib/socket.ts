@@ -7,7 +7,8 @@ class SocketService {
   connect() {
     if (this.socket?.connected) return;
 
-    this.socket = io(window.location.origin, {
+    const socketUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    this.socket = io(socketUrl, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
     });
