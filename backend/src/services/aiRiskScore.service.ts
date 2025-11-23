@@ -29,12 +29,22 @@ export class AIRiskScoreService {
     this.prisma = prisma;
     this.riskScoreService = new RiskScoreService(prisma);
     this.isEnabled = process.env.AI_RISK_SCORING_ENABLED === 'true';
+    this.initClient();
+  }
 
-    if (process.env.ANTHROPIC_API_KEY && process.env.CLAUDE_TEST_MODE !== 'true') {
+  private initClient() {
+    // Lazy init - check env vars each time in case they were set after startup
+    if (!this.client && process.env.ANTHROPIC_API_KEY && process.env.CLAUDE_TEST_MODE !== 'true') {
       this.client = new Anthropic({
         apiKey: process.env.ANTHROPIC_API_KEY
       });
+      console.log('[AI Risk] Anthropic client initialized');
     }
+  }
+
+  private getClient(): Anthropic | null {
+    this.initClient();
+    return this.client;
   }
 
   /**
@@ -49,7 +59,8 @@ export class AIRiskScoreService {
     const baseResult = await this.riskScoreService.calculateRiskScore(patient, appointment);
 
     // Check if AI is enabled and available
-    if (!this.isEnabled || !this.client) {
+    const client = this.getClient();
+    if (!this.isEnabled || !client) {
       return {
         ...baseResult,
         finalScore: baseResult.score,
@@ -389,7 +400,9 @@ Return ONLY a JSON response (no markdown, no explanation outside JSON):
    * Check if AI scoring is available
    */
   isAIAvailable(): boolean {
-    return this.isEnabled && this.client !== null;
+    // Re-check isEnabled from env in case it changed
+    this.isEnabled = process.env.AI_RISK_SCORING_ENABLED === 'true';
+    return this.isEnabled && this.getClient() !== null;
   }
 }
 
