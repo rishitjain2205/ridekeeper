@@ -302,7 +302,7 @@ export function createRideRoutes(prisma: PrismaClient, io: SocketIOServer): Rout
       const updatedRide = await prisma.ride.update({
         where: { id },
         data: {
-          status: status as RideStatus,
+          status: status as string,
           driverName: uberStatus?.driver?.name,
           vehicleInfo: uberStatus?.driver ? `${uberStatus.driver.vehicle} (${uberStatus.driver.license})` : null,
           driverLatitude: uberStatus?.current_location?.lat,

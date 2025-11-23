@@ -303,7 +303,7 @@ export class SchedulerService {
         const uberStatus = await uberHealthService.getRideStatus(ride.uberRideId);
         if (!uberStatus) continue;
 
-        const statusMap: Record<string, RideStatus> = {
+        const statusMap: Record<string, string> = {
           'scheduled': RideStatus.SCHEDULED,
           'driver_assigned': RideStatus.DRIVER_ASSIGNED,
           'en_route': RideStatus.DRIVER_ASSIGNED,
