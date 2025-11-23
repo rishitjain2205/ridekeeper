@@ -10,6 +10,7 @@ import { createRideRoutes } from './routes/rides.routes.js';
 import { createSMSRoutes } from './routes/sms.routes.js';
 import { createDashboardRoutes } from './routes/dashboard.routes.js';
 import { SchedulerService } from './services/scheduler.service.js';
+import { seedDatabase } from './services/seed.service.js';
 
 dotenv.config();
 
@@ -116,7 +117,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 // Start server
 const PORT = process.env.PORT || 3001;
 
-httpServer.listen(PORT, () => {
+httpServer.listen(PORT, async () => {
   console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
@@ -129,6 +130,13 @@ httpServer.listen(PORT, () => {
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
   `);
+
+  // Auto-seed database if empty
+  try {
+    await seedDatabase(prisma);
+  } catch (error) {
+    console.error('Error seeding database:', error);
+  }
 });
 
 // Graceful shutdown
